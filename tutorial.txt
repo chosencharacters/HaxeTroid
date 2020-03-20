@@ -26,9 +26,44 @@ For our tutorial, the majority of our work with placing things on the game to be
 
 Creating the Player
 
-We're going to essentially add some scaffolding for a Player. We want our player to:
+Let's create a new class that extends FlxSprite called Player
+
+We're going to essentially add some scaffolding for a Player in the form of functions. As I've said before, the focus on this tutorial is not just development but how to organize big tasks into little-er tasks. So let's consider what we want. We want to create a little spaceperson who can shoot, walk, and fly, they'll encounter enemies and get hit by them and if they take enough damage they die. So to break that down we want our player to:
 
 1. Walk
 2. Jump/Jetpack
-3. Shoot
-4. And get hit
+3. Shoot/Charge Missiles
+4. Animate their movements
+5. Take Damage
+6. Die/Respawn
+
+To do all this they'll need some variables. Health, MaxHealth, Missile Fire Rate, etc. And we want all this to be modifiable later through upgrades, so let's really variable it out and intialize those now at the *top* of the class:
+
+```
+	var speed:Int = 400; //acceleration on the X axis (horizontal)
+	var maxSpeed:Int = 100; //max speed they on the X axis (horizontal)
+	
+	var maxHealth:Int = 100; //max health (also the default health when the player respawns)
+	
+	var chargeRate:Int = 30; //default is full charge after 1 second (30 frames)
+	
+	var lift:Int = 15; //jetpack lift acceleration
+	var liftMax:Int = 60; //max jetpack lift
+```
+
+So what we're going to do here is make a bunch of empty functions that'll act as a in-code "ToDo" list. We'll just comment the ones we're not dealing with right now:
+
+```
+override public function update(elapsed:Float):Void 
+	{
+		walk();
+		/*
+		TODO:
+		jump();
+		shoot();
+		Take Damage functions
+		*/
+		
+		super.update(elapsed);
+	}
+```
