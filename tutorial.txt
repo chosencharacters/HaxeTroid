@@ -1,0 +1,34 @@
+So first thing we want to do is initial setup. Let's get acquainted with our three starter classes:
+
+Main
+PlayState
+AssetPaths
+
+Main is by default the first thing that runs in a HaxeFlixel game. If there's anything you want to run once and at the very beginning, this is where you'd put it. As is, it just creates a new game.
+
+We want to change this line to 
+
+```
+//Make a new flixel game of resolution 256x144 that starts on PlayState
+AddChild(new FlxGame(256, 144, PlayState))
+```
+
+This line essentially says: 
+1. Make a new Flixel Game
+2. With resolution 256x144 (which is a widescreen 16:9)
+3. And start it on PlayState
+
+PlayState is our first State, which is just what it sounds like - a state of your game. With game dev (and programming in general) you want to focus on compartimentalization - seperating a big task into several smaller tasks. The biggest of these tasks in a game is seperating them into these States. For example, we can have a Menu State, Highscore State, and of course, Play State.
+
+For our tutorial, the majority of our work with placing things on the game to be played with (player, enemies, levels, etc.) will be done in PlayState.
+
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+Creating the Player
+
+We're going to essentially add some scaffolding for a Player. We want our player to:
+
+1. Walk
+2. Jump/Jetpack
+3. Shoot
+4. And get hit
