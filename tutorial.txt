@@ -40,30 +40,261 @@ We're going to essentially add some scaffolding for a Player in the form of func
 To do all this they'll need some variables. Health, MaxHealth, Missile Fire Rate, etc. And we want all this to be modifiable later through upgrades, so let's really variable it out and intialize those now at the *top* of the class:
 
 ```
-	var speed:Int = 400; //acceleration on the X axis (horizontal)
-	var maxSpeed:Int = 100; //max speed they on the X axis (horizontal)
+	/** max speed they on the X axis (horizontal) **/
+	var maxSpeed:Int = 100;
 	
-	var maxHealth:Int = 100; //max health (also the default health when the player respawns)
+	/** frames to reach max speed (60 frames per second) **/
+	var framesToMaxSpeed:Int = 15;
 	
-	var chargeRate:Int = 30; //default is full charge after 1 second (30 frames)
+	/** max health (also the default health when the player respawns) **/
+	var maxHealth:Int = 100;
 	
-	var lift:Int = 15; //jetpack lift acceleration
-	var liftMax:Int = 60; //max jetpack lift
+	/** default is full charge after 1 second (30 frames) **/
+	var chargeRate:Int = 30;
+	
+	/** our intial jump, negative is up **/
+	var initialJump:Int = -50;
+	
+	/** jetpack lift acceleration **/
+	var lift:Int = 15;
+	
+	/** max jetpack lift **/
+	var liftMax:Int = 60;
+	
+	/** max fuel, lose 1 per frame **/
+	var fuelMax:Int = 40;
+	
+	/** player's current fuel **/
+	var fuel:Int = 0;
 ```
 
-So what we're going to do here is make a bunch of empty functions that'll act as a in-code "ToDo" list. We'll just comment the ones we're not dealing with right now:
+So all in all our class should look like this so far:
 
 ```
-override public function update(elapsed:Float):Void 
+
+package;
+
+import flixel.FlxSprite;
+import flixel.system.FlxAssets.FlxGraphicAsset;
+
+
+/**
+ * A player that walks, jumps, jetpacks, and shoots!
+ * @author <Your Name Here>
+ */
+class Player extends FlxSprite 
+{
+	/** max speed they on the X axis (horizontal) **/
+	var maxSpeed:Int = 100;
+	
+	/** frames to reach max speed (60 frames per second) **/
+	var framesToMaxSpeed:Int = 15;
+	
+	/** max health (also the default health when the player respawns) **/
+	var maxHealth:Int = 100;
+	
+	/** default is full charge after 1 second (30 frames) **/
+	var chargeRate:Int = 30;
+	
+	/** our intial jump, negative is up **/
+	var initialJump:Int = -200;
+	
+	/** jetpack lift acceleration **/
+	var lift:Int = 15;
+	
+	/** max jetpack lift **/
+	var liftMax:Int = 60;
+	
+	/** max fuel, lose 1 per frame **/
+	var fuelMax:Int = 40;
+	
+	/** player's current fuel **/
+	var fuel:Int = 0;
+	
+	public function new(?X:Float=0, ?Y:Float=0, ?SimpleGraphic:FlxGraphicAsset) 
 	{
-		walk();
-		/*
-		TODO:
-		jump();
-		shoot();
-		Take Damage functions
-		*/
+		super(X, Y, SimpleGraphic);
+		
+		//just a simple square for now
+		makeGraphic(20, 20);
+		
+		//set the max speed, Flixel won't let the object get any faster than this!
+		maxVelocity.x = maxSpeed;
+		
+		//gravity, down is positive, up is negative
+		acceleration.y = 200;
+		
+		//floor friction
+		drag.x = 250;
+	}
+
+}
+
+```
+
+This may seem like a long class for something that... well, it doesn't do anything yet. But trust me - this will make your life a lot easier in the future!
+ 
+So what we're going to do here is make a bunch of empty functions that'll act as a in-code "TODO" list. We'll just comment the ones we're not dealing with right now:
+
+
+```
+/** Main player loop **/
+override public function update(elapsed:Float):Void 
+{
+	walk();
+	/*
+	TODO:
+	jump();
+	shoot();
+	Take Damage functions
+	*/
+		
+	super.update(elapsed);
+}
+```
+
+Alright, finally time to make our little square move. First, we need to import FlxG, which is a static reference to the game. This allows you to access the primary camera, variables, and most commonly the keys! So let's add `import flixel.FlxG;` at the top of your class, and while we're at it, let's throw in FlxObject which we'll need later. Your imports should look like this:
+
+```
+package;
+
+import flixel.FlxG;
+import flixel.FlxObject;
+import flixel.FlxSprite;
+import flixel.system.FlxAssets.FlxGraphicAsset;
+```
+
+Now let's, yanno, actually move our square.
+
+Normally you'd want to just set acceleration.x to whatever you want, and you can still do that, but I find it easier to actually have a constant rate of increase measured in frames. It looks a little more complicated in code but overall it's way more controllable. It'll end up looking like this:
+
+```
+/** Walk around left to right **/
+function walk()
+{
+	if (FlxG.keys.anyPressed(["LEFT"]))
+	{
+		//move to the LEFT (negative)
+		velocity.x -= maxSpeed / framesToMaxSpeed;
+	}
+	if (FlxG.keys.anyPressed(["RIGHT"]))
+	{
+		//move to the RIGHT (positive)
+		velocity.x -= maxSpeed / framesToMaxSpeed;
+	}
+}
+```
+
+And that's it! Because we set the drag.x, the player will automatically slow down. Because we set maxVelocity.x, we don't have to worry about them going over the speed limit either!
+
+Optional:
+
+I prefer to do this in my games as it gives smoother movement, which is that you actually accelerate faster when you're trying to turn around quickly. To do that all we need to do is detect if the player is going the opposite direction of the direction they're trying to do, and then just add more velocity.
+
+```
+/** Walk around left to right **/
+function walk()
+{
+	if (FlxG.keys.anyPressed(["LEFT"]))
+	{
+		//move to the LEFT (negative)
+		velocity.x -= maxSpeed / framesToMaxSpeed;
+		//if we're going to the RIGHT, slow down the player's speed (so they turn around faster)
+		if (velocity.x > 0) velocity.x * .95;
+	}
+	if (FlxG.keys.anyPressed(["RIGHT"]))
+	{
+		//move to the RIGHT (positive)
+		velocity.x += maxSpeed / framesToMaxSpeed;
+		//if we're going to the LEFT, slow down the player's speed (so they turn around faster)
+		if (velocity.x < 0) velocity.x * .95;
+	}
+}
+```
+
+Okay, let's shift gears for a moment and actually add our player to the game so we can see the result of what we've done. Go back to your PlayState and simply add the Player to the game and store them as a variable. In other words, make your PlayState look like this.
+
+We'll also add a simple test platform and give it collision (by doing a collide check in update, which is called every frame)
+
+```
+ 
+package;
+
+import flixel.FlxSprite;
+import flixel.FlxState;
+import flixel.FlxG;
+
+class PlayState extends FlxState
+{
+	var player:Player;
+	var testPlatform:FlxSprite;
+	
+	override public function create():Void
+	{
+		super.create();
+		
+		//add and assign the player variable in one line, nifty!
+		add(player = new Player(100, 100));
+		
+		//make a simple test platform
+		add(testPlatform = new FlxSprite(0, player.y + player.height));
+		//creates a simple rectangle
+		testPlatform.makeGraphic(FlxG.width, 100);
+		//stops the platform from moving when the player touches it
+		testPlatform.immovable = true;
+	}
+
+	override public function update(elapsed:Float):Void
+	{
+		//give the testPlatform Collision with the player
+		FlxG.collide(player, testPlatform);
 		
 		super.update(elapsed);
 	}
+}
+
+
 ```
+
+Okay so if we run the game you'll see your little square no longer falls to the abyss, yay! Now we need to make them jump. Jump code is really easy in Flixel, all we need to understand is
+
+1. How to detect when we're on the floor
+2. How to make the character jump !
+
+So let's update our TODO in the Update() function to
+
+override public function update(elapsed:Float):Void 
+{
+	walk();
+	jump();
+	/*
+	TODO:
+	shoot();
+	Take Damage functions
+	*/
+		
+	super.update(elapsed);
+}
+
+```
+
+And make our jump function:
+	
+```
+
+/** Press up to jump! **/
+function jump() {
+	var onGround:Bool = isTouching(FlxObject.FLOOR);
+	
+	//if we're on the ground, we can use the jump
+	if (onGround) 
+	{
+		if (FlxG.keys.anyJustPressed(["UP"])){
+			velocity.y = initialJump;
+		}
+	}
+}
+
+```
+
+If you run it now and press up, you should be able to jump!

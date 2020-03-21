@@ -1,43 +1,68 @@
 package;
 
+import flixel.FlxG;
 import flixel.FlxSprite;
+import flixel.FlxObject;
 import flixel.system.FlxAssets.FlxGraphicAsset;
 
+
 /**
- * ...
- * @author 
+ * A player that walks, jumps, jetpacks, and shoots!
+ * @author <Your Name Here>
  */
 class Player extends FlxSprite 
 {
-	var speed:Int = 15; //frames to reach max speed (60 frames per second)
-	var maxSpeed:Int = 100; //max speed they on the X axis (horizontal)
+	/** max speed they on the X axis (horizontal) **/
+	var maxSpeed:Int = 100;
 	
-	var maxHealth:Int = 100; //max health (also the default health when the player respawns)
+	/** frames to reach max speed (60 frames per second) **/
+	var framesToMaxSpeed:Int = 15;
 	
-	var chargeRate:Int = 30; //default is full charge after 1 second (30 frames)
+	/** max health (also the default health when the player respawns) **/
+	var maxHealth:Int = 100;
 	
-	var lift:Int = 15; //jetpack lift acceleration
-	var liftMax:Int = 60; //max jetpack lift
+	/** default is full charge after 1 second (30 frames) **/
+	var chargeRate:Int = 30;
 	
-	var fuelMax:Int = 40; //max fuel, lose 1 per frame
-	var fuel:Int = 0; //player's current fuel
+	/** our intial jump, negative is up **/
+	var initialJump:Int = -100;
+	
+	/** jetpack lift acceleration **/
+	var lift:Int = 15;
+	
+	/** max jetpack lift **/
+	var liftMax:Int = 60;
+	
+	/** max fuel, lose 1 per frame **/
+	var fuelMax:Int = 40;
+	
+	/** player's current fuel **/
+	var fuel:Int = 0;
 	
 	public function new(?X:Float=0, ?Y:Float=0, ?SimpleGraphic:FlxGraphicAsset) 
 	{
 		super(X, Y, SimpleGraphic);
 		
-		makeGraphic(20, 20); //just a simple square for now
-		maxVelocity.x = maxSpeed; //set the max speed, Flixel won't let the object get any faster than this!
+		//just a simple square for now
+		makeGraphic(20, 20);
 		
-		drag.x = 200; //loss of speed when the button is let go
+		//set the max speed, Flixel won't let the object get any faster than this!
+		maxVelocity.x = maxSpeed;
+		
+		//gravity, down is positive, up is negative
+		acceleration.y = 200;
+		
+		//floor friction
+		drag.x = 250;
 	}
 	
+	/** main player loop **/
 	override public function update(elapsed:Float):Void 
 	{
 		walk();
+		jump();
 		/*
 		TODO:
-		jump();
 		shoot();
 		Take Damage functions
 		*/
@@ -45,4 +70,36 @@ class Player extends FlxSprite
 		super.update(elapsed);
 	}
 	
+	/** Move left and right **/
+	function walk() {
+		if (FlxG.keys.anyPressed(["LEFT"])) 
+		{
+			//move to the LEFT (negative)
+			velocity.x -= maxSpeed / framesToMaxSpeed;
+			//if we're going to the RIGHT, slow down the player's speed (so they turn around faster)
+			if (velocity.x > 0) velocity.x * .95;
+		}
+		if (FlxG.keys.anyPressed(["RIGHT"])) 
+		{
+			//move to the RIGHT (positive)
+			velocity.x += maxSpeed / framesToMaxSpeed;
+			//if we're going to the LEFT, slow down the player's speed (so they turn around faster)
+			if (velocity.x < 0) velocity.x * .95;
+		}
+	}
+	
+	/** Press up to jump! **/
+	function jump() {
+		//easy access variable for being on the ground
+		var onGround:Bool = isTouching(FlxObject.FLOOR);
+		
+		//if we're on the ground, we can use the jump
+		if (onGround) 
+		{
+			//if we just pressed up, we jump
+			if (FlxG.keys.anyJustPressed(["UP"])){
+				velocity.y = initialJump;
+			}
+		}
+	}
 }
