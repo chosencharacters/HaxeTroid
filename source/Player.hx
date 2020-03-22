@@ -88,17 +88,39 @@ class Player extends FlxSprite
 		}
 	}
 	
-	/** Press up to jump! **/
+	/** Press UP to jump! **/
 	function jump() {
-		//easy access variable for being on the ground
+		//1. Detect we're on the floor
 		var onGround:Bool = isTouching(FlxObject.FLOOR);
 		
-		//if we're on the ground, we can use the jump
+		//2. If we're on the ground...
 		if (onGround) 
 		{
-			//if we just pressed up, we jump
+			//We can jump if the UP key is pressed!
 			if (FlxG.keys.anyJustPressed(["UP"])){
 				velocity.y = initialJump;
+			}
+		}
+		
+		//Jetpack handler
+		//J1. If we press UP and we have fuel
+		if (FlxG.keys.anyJustPressed(["UP"]) && fuel > 0) 
+		{
+			//J2. Add lift and decrease fuel
+			velocity.y -= lift;
+			fuel--;
+			//Max velocity so they don't go flying infinitely faster
+			if (velocity.y < -liftMax) {
+				velocity.y = -liftMax;
+			}
+		}
+		//J3. When they're on the floor, add fuel back.
+		if (!onGround) 
+		{
+			//They'll recharge in 20 frames
+			fuel += Math.ceil(fuelMax / 20);
+			if (fuel > fuelMax) {
+				fuel = fuelMax;
 			}
 		}
 	}

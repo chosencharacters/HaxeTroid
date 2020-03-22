@@ -53,7 +53,7 @@ To do all this they'll need some variables. Health, MaxHealth, Missile Fire Rate
 	var chargeRate:Int = 30;
 	
 	/** our intial jump, negative is up **/
-	var initialJump:Int = -50;
+	var initialJump:Int = -100;
 	
 	/** jetpack lift acceleration **/
 	var lift:Int = 15;
@@ -97,7 +97,7 @@ class Player extends FlxSprite
 	var chargeRate:Int = 30;
 	
 	/** our intial jump, negative is up **/
-	var initialJump:Int = -200;
+	var initialJump:Int = -100;
 	
 	/** jetpack lift acceleration **/
 	var lift:Int = 15;
@@ -282,13 +282,15 @@ And make our jump function:
 	
 ```
 
-/** Press up to jump! **/
+/** Press UP to jump! **/
 function jump() {
+	//1. Detect we're on the floor
 	var onGround:Bool = isTouching(FlxObject.FLOOR);
 	
-	//if we're on the ground, we can use the jump
+	//2. If we're on the ground...
 	if (onGround) 
 	{
+		//We can jump if the UP key is pressed!
 		if (FlxG.keys.anyJustPressed(["UP"])){
 			velocity.y = initialJump;
 		}
@@ -298,3 +300,39 @@ function jump() {
 ```
 
 If you run it now and press up, you should be able to jump!
+
+Admittedly, it's not that high of a jump, and that's because of this next bit, the jetpack! Basically, if we're on the floor and pressing UP we'll switch to jetpack mode, as long as we have fuel, we'll have lift. So to break it down:
+	
+1. If we press UP and we have fuel
+2. Add lift and decrease fuel
+3. When they're on the floor, add fuel back.
+
+When the player holds up, the jetpack will carry their lift. We're also adding a max lift so that they don't go off the rails and just go infinitely higher. In addition, when they're on the floor. So add this to the end of jump()
+
+```
+
+//Jetpack handler
+//J1. If we press UP and we have fuel
+if (FlxG.keys.anyJustPressed(["UP"]) && fuel > 0) 
+{
+	//J2. Add lift and decrease fuel
+	velocity.y -= lift;
+	fuel--;
+	//Max velocity so they don't go flying infinitely faster
+	if (velocity.y < -liftMax) {
+		velocity.y = -liftMax;
+	}
+}
+//J3. When they're on the floor, add fuel back.
+if (!onGround) 
+{
+	//They'll recharge in 20 frames
+	fuel += Math.ceil(fuelMax / 20);
+	if (fuel > fuelMax) {
+		fuel = fuelMax;
+	}
+}
+
+```
+
+Hold up now. If you test your game you'll see the controls for jump and jetpack overlap, and the result is if you're holding down jump you'll immediately start wasting jetpack fuel. So to game design around this, let's change the controls a bit - when you let go of jump and press it again midair, you'll start using your jetpack! So let's make a new variable that is called "jetpackMode" which is only True if the player released the jump button. It is set back to False if they touch the ground. So overall our code should look like this:
