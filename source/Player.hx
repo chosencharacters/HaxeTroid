@@ -21,7 +21,7 @@ class Player extends FlxSprite
 	/** max health (also the default health when the player respawns) **/
 	var maxHealth:Int = 100;
 	
-	/** default is full charge after 1 second (30 frames) **/
+	/** default is full charge after 1/2 second (30/60 frames) **/
 	var chargeRate:Int = 30;
 	
 	/** our intial jump, negative is up **/
@@ -35,6 +35,9 @@ class Player extends FlxSprite
 	
 	/** max fuel, lose 1 per frame **/
 	var fuelMax:Int = 40;
+	
+	/** frames until fuel is recharged **/
+	var fuelRechargeRate:Int = 20;
 	
 	/** player's current fuel **/
 	var fuel:Int = 0;
@@ -103,8 +106,8 @@ class Player extends FlxSprite
 		}
 		
 		//Jetpack handler
-		//J1. If we press UP and we have fuel
-		if (FlxG.keys.anyJustPressed(["UP"]) && fuel > 0) 
+		//J1. If we hold UP and we have fuel
+		if (FlxG.keys.anyPressed(["UP"]) && fuel > 0) 
 		{
 			//J2. Add lift and decrease fuel
 			velocity.y -= lift;
@@ -115,10 +118,10 @@ class Player extends FlxSprite
 			}
 		}
 		//J3. When they're on the floor, add fuel back.
-		if (!onGround) 
+		if (onGround) 
 		{
-			//They'll recharge in 20 frames
-			fuel += Math.ceil(fuelMax / 20);
+			//They'll recharge in fuelRechargeRate frames
+			fuel += Math.ceil(fuelMax / fuelRechargeRate);
 			if (fuel > fuelMax) {
 				fuel = fuelMax;
 			}
