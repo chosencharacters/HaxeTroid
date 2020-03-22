@@ -69,7 +69,12 @@ To do all this they'll need some variables. Health, MaxHealth, Missile Fire Rate
 	
 	/** player's current fuel **/
 	var fuel:Int = 0;
+	
+	/** Are we in jetpack mode? **/
+	var jetpackMode:Bool = false;
 ```
+
+This is a lot of variables, and I've added descriptions to each one of them so it looks like even more, and we haven't touched a lick of code that uses any of them so they're kinda just sitting there, but honestly in game design you should expect even more variables then this. It keeps things organized and modifiable as long as you don't go too overboard - always strive to have as many variables as you need and no more, which is of course easier said than done.
 
 So all in all our class should look like this so far:
 
@@ -116,6 +121,9 @@ class Player extends FlxSprite
 	
 	/** player's current fuel **/
 	var fuel:Int = 0;
+	
+	/** Are we in jetpack mode? **/
+	var jetpackMode:Bool = false;
 	
 	public function new(?X:Float=0, ?Y:Float=0, ?SimpleGraphic:FlxGraphicAsset) 
 	{
@@ -341,4 +349,94 @@ if (onGround)
 
 ```
 
-Hold up now. If you test your game you'll see the controls for jump and jetpack overlap, and the result is if you're holding down jump you'll immediately start wasting jetpack fuel. So to game design around this, let's change the controls a bit - when you let go of jump and press it again midair, you'll start using your jetpack! So let's make a new variable that is called "jetpackMode" which is only True if the player released the jump button. It is set back to False if they touch the ground. So overall our code should look like this:
+Hold up now. If you test your game you'll see the controls for jump and jetpack overlap, and the result is if you're holding down jump you'll immediately start wasting jetpack fuel. So to game design around this, let's change the controls a bit - when you let go of jump and press it again midair, you'll start using your jetpack! So let's use that variable called "jetpackMode" we initialized all the way back in the beginning which is only True if the player released the jump button. It is set back to False if they touch the ground. So overall our jump code should look like this:
+
+```
+
+/** Press UP to jump! **/
+function jump() {
+	//1. Detect we're on the floor
+	var onGround:Bool = isTouching(FlxObject.FLOOR);
+	
+	//2. If we're on the ground...
+	if (onGround) 
+	{
+		//We can jump if the UP key is pressed!
+		if (FlxG.keys.anyJustPressed(["UP"])){
+			velocity.y = initialJump;
+		}
+	}
+	
+	//Jetpack handler
+	//J1. If we hold UP and we have fuel
+	if (FlxG.keys.anyPressed(["UP"]) && fuel > 0 && jetpackMode) 
+	{
+		//J2. Add lift and decrease fuel
+		velocity.y -= lift;
+		fuel--;
+		//Max velocity so they don't go flying infinitely faster
+		if (velocity.y < -liftMax) {
+			velocity.y = -liftMax;
+		}
+	}
+	//J3. When they're on the floor, add fuel back.
+	if (onGround) 
+	{
+		//If we're on the floor, we reset jetpackMode
+		jetpackMode = false;
+		//They'll recharge in fuelRechargeRate frames
+		fuel += Math.ceil(fuelMax / fuelRechargeRate);
+		if (fuel > fuelMax) {
+			fuel = fuelMax;
+		}
+	}
+	
+	//J4. Use jetpack only when the key is released and pressed again afterwards
+	if (!onGround && FlxG.keys.anyJustReleased(["UP"]))
+	{
+		jetpackMode = true;
+	}
+}
+	
+```
+
+Okay time to animate our little guy. Why now? Because if we wanna give him a gun, well, we're gonna need to know where to put it - trust me it's a LOT easier to do that after you get the base sprite going at least. Anyhow, if you look in your images folder you'll notice our sprite sheet called astro.png. Get it? They're an astronaut... named astro... okay anyways AssetPaths does a nifty magic thing (how it does it is way outside the scope of this tutorial) where it automatically makes static references to any assets you put in to your assets folder. So in our case, `AssetPaths.astro__png` is how we'd access our image. Things to note about HaxeFlixel is it only accepts spritesheets that are 1. the same size for every frame 2. read left to right. Anything else and you're asking for trouble. So make sure to use Aseprite or another neat program when making your sprite and just export it normally using that, it handles those details for you and HaxeFlixel will be happy with you (and so will I.)
+
+Anyways yea so this sprite is 4 frames each 8x9 pixels. That's all we need to know about it, really. Now let's delete that old "MakeGraphic" line and instead load the image and animations like so:
+	
+```
+
+//adding animations
+loadGraphic(AssetPaths.astro__png, true, 8, 9, true);
+animation.add("idle", [0]);
+animation.add("walk", [1, 2], 6, true);
+animation.add("jump", [3]);
+
+```
+
+Now we can add a new function at the end of our update right before `super.update(elapsed)` called animationHandler. This decides on what animation to play, which we'll call using `animation.play();` So let's do this:
+	
+```
+
+/** picks an animation to play **/
+function animationHandler()
+{
+	var isWalking:Bool = velocity.x != 0;
+	var isJumping:Bool = !isTouching(FlxObject.FLOOR);
+	
+	//walking animation only when you're walking on the ground
+	if (isWalking && !isJumping)
+		animation.play("walk");
+	//jumping animation is always when you're in the air
+	if (isJumping)
+		animation.play("jump");
+	//idle animation only when you're on the floor
+	if (!isWalking && !isJumping)
+		animation.play("idle")
+}
+	
+```
+
+I used some funky shorthands to make this more readable - in coding you can assign a variable to a statement just like you can to an integer. It makes things more readable in some cases if your statement isn't too long. Same thing with non-curly brace ifs which only work if you have a single line that follows.
+
+Anyhow, run it and you can see your little square is now an even little-er astronaut!

@@ -42,6 +42,9 @@ class Player extends FlxSprite
 	/** player's current fuel **/
 	var fuel:Int = 0;
 	
+	/** Are we in jetpack mode? **/
+	var jetpackMode:Bool = false;
+	
 	public function new(?X:Float=0, ?Y:Float=0, ?SimpleGraphic:FlxGraphicAsset) 
 	{
 		super(X, Y, SimpleGraphic);
@@ -69,6 +72,8 @@ class Player extends FlxSprite
 		shoot();
 		Take Damage functions
 		*/
+		
+		animationHandler();
 		
 		super.update(elapsed);
 	}
@@ -107,7 +112,7 @@ class Player extends FlxSprite
 		
 		//Jetpack handler
 		//J1. If we hold UP and we have fuel
-		if (FlxG.keys.anyPressed(["UP"]) && fuel > 0) 
+		if (FlxG.keys.anyPressed(["UP"]) && fuel > 0 && jetpackMode) 
 		{
 			//J2. Add lift and decrease fuel
 			velocity.y -= lift;
@@ -120,11 +125,36 @@ class Player extends FlxSprite
 		//J3. When they're on the floor, add fuel back.
 		if (onGround) 
 		{
+			//If we're on the floor, we reset jetpackMode
+			jetpackMode = false;
 			//They'll recharge in fuelRechargeRate frames
 			fuel += Math.ceil(fuelMax / fuelRechargeRate);
 			if (fuel > fuelMax) {
 				fuel = fuelMax;
 			}
 		}
+		
+		//J4. Use jetpack only when the key is released and pressed again afterwards
+		if (!onGround && FlxG.keys.anyJustReleased(["UP"]))
+		{
+			jetpackMode = true;
+		}
+	}
+	
+	/** picks an animation to play **/
+	function animationHandler()
+	{
+		var isWalking:Bool = velocity.x != 0;
+		var isJumping:Bool = !isTouching(FlxObject.FLOOR);
+		
+		//walking animation only when you're walking on the ground
+		if (isWalking && !isJumping)
+			animation.play("walk");
+		//jumping animation is always when you're in the air
+		if (isJumping)
+			animation.play("jump");
+		//idle animation only when you're on the floor
+		if (!isWalking && !isJumping)
+			animation.play("idle")
 	}
 }
