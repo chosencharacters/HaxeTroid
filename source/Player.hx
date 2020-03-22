@@ -49,8 +49,11 @@ class Player extends FlxSprite
 	{
 		super(X, Y, SimpleGraphic);
 		
-		//just a simple square for now
-		makeGraphic(20, 20);
+		//adding animations
+		loadGraphic(AssetPaths.astro__png, true, 8, 9, true);
+		animation.add("idle", [0]);
+		animation.add("walk", [1, 2], 6, true);
+		animation.add("jump", [3]);
 		
 		//set the max speed, Flixel won't let the object get any faster than this!
 		maxVelocity.x = maxSpeed;
@@ -150,11 +153,16 @@ class Player extends FlxSprite
 		//walking animation only when you're walking on the ground
 		if (isWalking && !isJumping)
 			animation.play("walk");
+		
 		//jumping animation is always when you're in the air
 		if (isJumping)
 			animation.play("jump");
+		
 		//idle animation only when you're on the floor
 		if (!isWalking && !isJumping)
-			animation.play("idle")
+			animation.play("idle");
+			
+		//turn around when you're going in the opposite direction
+		flipX = velocity.x < 0;
 	}
 }

@@ -427,12 +427,17 @@ function animationHandler()
 	//walking animation only when you're walking on the ground
 	if (isWalking && !isJumping)
 		animation.play("walk");
+	
 	//jumping animation is always when you're in the air
 	if (isJumping)
 		animation.play("jump");
+	
 	//idle animation only when you're on the floor
 	if (!isWalking && !isJumping)
-		animation.play("idle")
+		animation.play("idle");
+		
+	//turn around automatically
+	flipX = velocity.x < 0;
 }
 	
 ```
