@@ -4,6 +4,8 @@ import flixel.FlxG;
 import flixel.FlxSprite;
 import flixel.FlxObject;
 import flixel.system.FlxAssets.FlxGraphicAsset;
+import flixel.input.gamepad.FlxGamepad;
+import flixel.input.gamepad.FlxGamepadInputID;
 
 
 /**
@@ -45,6 +47,16 @@ class Player extends FlxSprite
 	/** Are we in jetpack mode? **/
 	var jetpackMode:Bool = false;
 	
+	//Controls
+	var rightButton:Bool = false;
+	var leftButton:Bool = false;
+	var jumpButtonPressed:Bool = false;
+	var jumpButtonHeld:Bool = false;
+	var jumpButtonReleased:Bool = false;
+	var shootButtonPressed:Bool = false;
+	var shootButtonHeld:Bool = false;
+	var shootButtonReleased:Bool = false;
+	
 	public function new(?X:Float=0, ?Y:Float=0, ?SimpleGraphic:FlxGraphicAsset) 
 	{
 		super(X, Y, SimpleGraphic);
@@ -68,6 +80,7 @@ class Player extends FlxSprite
 	/** main player loop **/
 	override public function update(elapsed:Float):Void 
 	{
+		updateControl();
 		walk();
 		jump();
 		/*
@@ -81,16 +94,48 @@ class Player extends FlxSprite
 		super.update(elapsed);
 	}
 	
+	/** Updates controls **/
+	function updateControl(){
+		//1. Keyboard Controls
+		rightButton = FlxG.keys.anyPressed(["RIGHT"]);
+		leftButton = FlxG.keys.anyPressed(["LEFT"]);
+		jumpButtonPressed = FlxG.keys.anyJustPressed(["UP", "Z"]);
+		jumpButtonHeld = FlxG.keys.anyJustPressed(["UP", "Z"]);
+		jumpButtonReleased = FlxG.keys.anyJustReleased(["UP", "Z"]);
+		shootButtonPressed = FlxG.keys.anyJustPressed(["X", "SPACE"]);
+		shootButtonHeld = FlxG.keys.anyPressed(["X", "SPACE"]);
+		shootButtonReleased = FlxG.keys.anyJustReleased(["X", "SPACE"]);
+		
+		//2. Joystick Controls
+		
+		//joystick deadzone so minor movements don't get detected, feel free to tweak this
+		var deadzone:Float = 0.1;
+		
+		var gamepad:FlxGamepad = FlxG.gamepads.getFirstActiveGamepad();
+		
+		if(gamepad != null) 
+		{
+			rightButton = rightButton || gamepad.analog.value.LEFT_STICK_X > deadzone || gamepad.anyPressed([FlxGamepadInputID.DPAD_RIGHT]);
+			leftButton = leftButton || gamepad.analog.value.LEFT_STICK_X < deadzone || gamepad.anyPressed([FlxGamepadInputID.DPAD_LEFT]);
+			jumpButtonPressed = gamepad.anyJustPressed([FlxGamepadInputID.A]);
+			jumpButtonHeld = gamepad.anyPressed([FlxGamepadInputID.A]);
+			jumpButtonReleased = gamepad.anyJustReleased([FlxGamepadInputID.A]);
+			shootButtonPressed = shootButtonPressed || gamepad.anyJustPressed([FlxGamepadInputID.X]);
+			shootButtonHeld = shootButtonHeld || gamepad.anyPressed([FlxGamepadInputID.X]);
+			shootButtonReleased = shootButtonReleased || gamepad.anyJustReleased([FlxGamepadInputID.X]);
+		}
+	}
+	
 	/** Move left and right **/
 	function walk() {
-		if (FlxG.keys.anyPressed(["LEFT"])) 
+		if (leftButton) 
 		{
 			//move to the LEFT (negative)
 			velocity.x -= maxSpeed / framesToMaxSpeed;
 			//if we're going to the RIGHT, slow down the player's speed (so they turn around faster)
 			if (velocity.x > 0) velocity.x * .95;
 		}
-		if (FlxG.keys.anyPressed(["RIGHT"])) 
+		if (rightButton) 
 		{
 			//move to the RIGHT (positive)
 			velocity.x += maxSpeed / framesToMaxSpeed;
@@ -108,14 +153,14 @@ class Player extends FlxSprite
 		if (onGround) 
 		{
 			//We can jump if the UP key is pressed!
-			if (FlxG.keys.anyJustPressed(["UP"])){
+			if (jumpButtonPressed){
 				velocity.y = initialJump;
 			}
 		}
 		
 		//Jetpack handler
 		//J1. If we hold UP and we have fuel
-		if (FlxG.keys.anyPressed(["UP"]) && fuel > 0 && jetpackMode) 
+		if (jumpButtonHeld && fuel > 0 && jetpackMode) 
 		{
 			//J2. Add lift and decrease fuel
 			velocity.y -= lift;
@@ -138,7 +183,7 @@ class Player extends FlxSprite
 		}
 		
 		//J4. Use jetpack only when the key is released and pressed again afterwards
-		if (!onGround && FlxG.keys.anyJustReleased(["UP"]))
+		if (!onGround && jumpButtonReleased)
 		{
 			jetpackMode = true;
 		}

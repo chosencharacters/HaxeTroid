@@ -445,3 +445,58 @@ function animationHandler()
 I used some funky shorthands to make this more readable - in coding you can assign a variable to a statement just like you can to an integer. It makes things more readable in some cases if your statement isn't too long. Same thing with non-curly brace ifs which only work if you have a single line that follows.
 
 Anyhow, run it and you can see your little square is now an even little-er astronaut!
+
+Okay, now to address a little something that's been bothering me and probably bothering you - who the heck uses UP for a default jump button? Let's fix that. But first, I'm gonna make this a lot more manageable for everyone involved. Let's add these variables to the top of our class:
+	
+	```
+	//Controls
+	rightButton = false;
+	leftButton = false;
+	jumpButtonPressed = false;
+	jumpButtonHeld = false;
+	jumpButtonReleased = false;
+	shootButtonPressed = false;
+	shootButtonHeld = false;
+	shootButtonReleased = false;
+	```
+	
+	Now let's add a new function called updateControls at the beginning of our Player's update loop.
+	
+	```
+	rightButton = FlxG.anyPressed(["RIGHT"]);
+	leftButton = FlxG.anyPressed(["LEFT"]);
+	jumpButtonPressed = FlxG.anyJustPressed(["UP", "Z"]);
+	jumpButtonHeld = FlxG.anyJustPressed(["UP", "Z"]);
+	jumpButtonReleased = FlxG.anyJustReleased(["UP", "Z"]);
+	shootButtonPressed = FlxG.anyJustPressed(["X", "SPACE"]);
+	shootButtonHeld = FlxG.anyPressed(["X", "SPACE"]);
+	shootButtonReleased = FlxG.anyJustReleased(["X", "SPACE"]);
+	```
+	
+	Just for kicks let's also add in GamePad controls. These will work with practically any GamePad you plug in - Xbox, Pro Controller, PS4, some knock off. Put this after that last bit of code, don't forget to import `flixel.input.gamepad.FlxGamepad` and `flixel.input.gamepad.FlxGamepadInputID` first, though!
+	
+	```
+	//joystick deadzone so minor movements don't get detected, feel free to tweak this
+	var deadzone:Float = 0.1;
+	
+	gamepad = FlxG.gamepads.getFirstActiveGamepad();
+	
+	if(gamepad) 
+	{
+		rightButton = rightButton || gamepad.analog.value.LEFT_STICK_X > deadzone || gamepad.anyPressed([FlxGamepadInputID.DPAD_RIGHT]);
+		leftButton = leftButton || gamepad.analog.value.LEFT_STICK_X < deadzone || gamepad.anyPressed([FlxGamepadInputID.DPAD_LEFT]);
+		jumpButtonPressed = gamepad.anyJustPressed([FlxGamepadInputID.A]);
+		jumpButtonHeld = gamepad.anyPressed([FlxGamepadInputID.A]);
+		jumpButtonReleased = gamepad.anyJustReleased([FlxGamepadInputID.A]);
+		shootButtonPressed = shootButtonPressed || gamepad.anyJustPressed([FlxGamepadInputID.X]);
+		shootButtonHeld = shootButtonHeld || gamepad.anyPressed([FlxGamepadInputID.X]);
+		shootButtonReleased = shootButtonReleased || gamepad.anyJustReleased([FlxGamepadInputID.X]);
+	}
+	```
+	
+	Okay yea so that should do it. Now just replace all instances of ye olde jump and arrow key code with those variables and now your whole game should work with pretty much any keyboard or controller :)
+
+///////////////////////////////
+
+
+Alright, what's next? Violence. Guns. Mwahahaha! Yes our astronaut with their arm raised out actually has a little arm blaster. Use your imagination.
