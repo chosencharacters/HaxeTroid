@@ -27,13 +27,13 @@ class Missile extends Bullet
 		}
 		
 		//missile starts slow
-		velocity.x = velocity.x / 10;
+		velocity.x /= 10;
 	}
 	
 	override public function update(elapsed:Float):Void 
 	{
 		//then gets rapidly faster
-		velocity.x = velocity.x * 1.2;
+		velocity.x *= 1.2;
 		super.update(elapsed);
 	}
 	
