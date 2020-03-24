@@ -100,7 +100,7 @@ class Player extends FlxSprite
 		rightButton = FlxG.keys.anyPressed(["RIGHT"]);
 		leftButton = FlxG.keys.anyPressed(["LEFT"]);
 		jumpButtonPressed = FlxG.keys.anyJustPressed(["UP", "Z"]);
-		jumpButtonHeld = FlxG.keys.anyJustPressed(["UP", "Z"]);
+		jumpButtonHeld = FlxG.keys.anyPressed(["UP", "Z"]);
 		jumpButtonReleased = FlxG.keys.anyJustReleased(["UP", "Z"]);
 		shootButtonPressed = FlxG.keys.anyJustPressed(["X", "SPACE"]);
 		shootButtonHeld = FlxG.keys.anyPressed(["X", "SPACE"]);
@@ -117,9 +117,9 @@ class Player extends FlxSprite
 		{
 			rightButton = rightButton || gamepad.analog.value.LEFT_STICK_X > deadzone || gamepad.anyPressed([FlxGamepadInputID.DPAD_RIGHT]);
 			leftButton = leftButton || gamepad.analog.value.LEFT_STICK_X < deadzone || gamepad.anyPressed([FlxGamepadInputID.DPAD_LEFT]);
-			jumpButtonPressed = gamepad.anyJustPressed([FlxGamepadInputID.A]);
-			jumpButtonHeld = gamepad.anyPressed([FlxGamepadInputID.A]);
-			jumpButtonReleased = gamepad.anyJustReleased([FlxGamepadInputID.A]);
+			jumpButtonPressed = jumpButtonPressed || gamepad.anyJustPressed([FlxGamepadInputID.A]);
+			jumpButtonHeld = jumpButtonHeld || gamepad.anyPressed([FlxGamepadInputID.A]);
+			jumpButtonReleased = jumpButtonReleased || gamepad.anyJustReleased([FlxGamepadInputID.A]);
 			shootButtonPressed = shootButtonPressed || gamepad.anyJustPressed([FlxGamepadInputID.X]);
 			shootButtonHeld = shootButtonHeld || gamepad.anyPressed([FlxGamepadInputID.X]);
 			shootButtonReleased = shootButtonReleased || gamepad.anyJustReleased([FlxGamepadInputID.X]);
