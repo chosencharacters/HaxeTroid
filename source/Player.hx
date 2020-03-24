@@ -98,7 +98,7 @@ class Player extends FlxSprite
 		Take Damage functions
 		*/
 		
-		animationHandler();
+		handleAnimation();
 		
 		super.update(elapsed);
 	}
@@ -238,7 +238,7 @@ class Player extends FlxSprite
 	}
 	
 	/** picks an animation to play **/
-	function animationHandler()
+	function handleAnimation()
 	{
 		var isWalking:Bool = velocity.x != 0;
 		var isJumping:Bool = !isTouching(FlxObject.FLOOR);
