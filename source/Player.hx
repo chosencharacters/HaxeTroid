@@ -106,14 +106,14 @@ class Player extends FlxSprite
 	/** Updates controls **/
 	function updateControl(){
 		//1. Keyboard Controls
-		rightButton = FlxG.keys.anyPressed(["RIGHT"]);
-		leftButton = FlxG.keys.anyPressed(["LEFT"]);
-		jumpButtonPressed = FlxG.keys.anyJustPressed(["UP", "Z"]);
-		jumpButtonHeld = FlxG.keys.anyPressed(["UP", "Z"]);
-		jumpButtonReleased = FlxG.keys.anyJustReleased(["UP", "Z"]);
-		shootButtonPressed = FlxG.keys.anyJustPressed(["X", "SPACE"]);
-		shootButtonHeld = FlxG.keys.anyPressed(["X", "SPACE"]);
-		shootButtonReleased = FlxG.keys.anyJustReleased(["X", "SPACE"]);
+		rightButton = FlxG.keys.anyPressed([RIGHT]);
+		leftButton = FlxG.keys.anyPressed([LEFT]);
+		jumpButtonPressed = FlxG.keys.anyJustPressed([UP, Z]);
+		jumpButtonHeld = FlxG.keys.anyPressed([UP, Z]);
+		jumpButtonReleased = FlxG.keys.anyJustReleased([UP, Z]);
+		shootButtonPressed = FlxG.keys.anyJustPressed([X, SPACE]);
+		shootButtonHeld = FlxG.keys.anyPressed([X, SPACE]);
+		shootButtonReleased = FlxG.keys.anyJustReleased([X, SPACE]);
 		
 		//2. Joystick Controls
 		
