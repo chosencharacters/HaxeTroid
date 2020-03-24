@@ -8,7 +8,7 @@ import flixel.FlxObject;
  */
 class Missile extends Bullet 
 {
-	var maxMissileVelocity:Int = 200;
+	static inline var MAX_MISSILE_VELOCITY:Int = 200;
 	
 	public function new() 
 	{
@@ -19,7 +19,7 @@ class Missile extends Bullet
 		setFacingFlip(FlxObject.RIGHT, false, false);
 		setFacingFlip(FlxObject.LEFT, true, false);
 		
-		maxVelocity.x = maxMissileVelocity;
+		maxVelocity.x = MAX_MISSILE_VELOCITY;
 		
 		if (velocity.x > 0){
 			facing = FlxObject.LEFT;
