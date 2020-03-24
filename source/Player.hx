@@ -1,12 +1,11 @@
 package;
 
+import flixel.group.FlxGroup.FlxTypedGroup;
 import flixel.FlxG;
 import flixel.FlxSprite;
 import flixel.FlxObject;
-import flixel.system.FlxAssets.FlxGraphicAsset;
 import flixel.input.gamepad.FlxGamepad;
 import flixel.input.gamepad.FlxGamepadInputID;
-
 
 /**
  * A player that walks, jumps, jetpacks, and shoots!
@@ -44,6 +43,8 @@ class Player extends FlxSprite
 	/** frames until fuel is recharged **/
 	var fuelRechargeRate:Int = 20;
 	
+	var bullets:FlxTypedGroup<Bullet>;
+
 	/** player's current fuel **/
 	var fuel:Int = 0;
 	
@@ -60,9 +61,10 @@ class Player extends FlxSprite
 	var shootButtonHeld:Bool = false;
 	var shootButtonReleased:Bool = false;
 	
-	public function new(?X:Float=0, ?Y:Float=0, ?SimpleGraphic:FlxGraphicAsset) 
+	public function new(x:Float, y:Float, bullets:FlxTypedGroup<Bullet>) 
 	{
-		super(X, Y, SimpleGraphic);
+		super(x, y);
+		this.bullets = bullets;
 		
 		//adding animations
 		loadGraphic(AssetPaths.astro__png, true, 8, 9, true);
@@ -218,13 +220,15 @@ class Player extends FlxSprite
 				//opposite edge of the sprite - bullet width
 				bulletX = x - 2;
 			}
-			//shoot a regular bullet
-			if (!missileMode){
-				PlayState.bullets.add(new Bullet(bulletX, bulletY, bulletSpeedX, 0, 1));
-			}
-			//shoot a missile
-			if (missileMode){
-				PlayState.bullets.add(new Missile(bulletX, bulletY, bulletSpeedX, 0, 5));
+			
+			if (missileMode) {
+				//shoot a missile
+				var missile = bullets.recycle(Missile.new);
+				missile.init(bulletX, bulletY, bulletSpeedX, 0, 5);
+			} else {
+				//shoot a regular bullet
+				var bullet = bullets.recycle(Bullet.new);
+				bullet.init(bulletX, bulletY, bulletSpeedX, 0, 1);
 			}
 		}
 		

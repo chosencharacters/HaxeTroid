@@ -1,6 +1,5 @@
 package;
 
-import flixel.FlxSprite;
 import flixel.FlxObject;
 
 /**
@@ -11,9 +10,9 @@ class Missile extends Bullet
 {
 	var maxMissileVelocity:Int = 200;
 	
-	public function new(X:Float=0, Y:Float=0, velX:Float=0, velY:Float=0, team:Int=0) 
+	public function new() 
 	{
-		super(X, Y - 1, velX, velY, team);
+		super();
 		
 		loadGraphic(AssetPaths.missile__png);
 		
