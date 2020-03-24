@@ -23,6 +23,9 @@ class Player extends FlxSprite
 	/** max health (also the default health when the player respawns) **/
 	var maxHealth:Int = 100;
 	
+	/** missile (!!!) charge **/
+	var charge:Int = 0;
+	
 	/** default is full charge after 1/2 second (30/60 frames) **/
 	var chargeRate:Int = 30;
 	
@@ -67,6 +70,10 @@ class Player extends FlxSprite
 		animation.add("walk", [1, 2], 6, true);
 		animation.add("jump", [3]);
 		
+		//our guy is facing right by default, so if he turns left we should flip it
+		setFacingFlip(FlxObject.RIGHT, false, false);
+		setFacingFlip(FlxObject.LEFT, true, false);
+		
 		//set the max speed, Flixel won't let the object get any faster than this!
 		maxVelocity.x = maxSpeed;
 		
@@ -83,9 +90,9 @@ class Player extends FlxSprite
 		updateControl();
 		walk();
 		jump();
+		shoot();
 		/*
 		TODO:
-		shoot();
 		Take Damage functions
 		*/
 		
@@ -189,6 +196,43 @@ class Player extends FlxSprite
 		}
 	}
 	
+	/** Shoots a bullet or missile **/
+	function shoot()
+	{
+		if (shootButtonHeld) charge++;
+		
+		//switch to misisles if charge is complete
+		var missileMode:Bool = charge >= chargeRate;
+		
+		//our two conditions handle inputs for regular bullets or missiles
+		if (shootButtonPressed || shootButtonReleased && missileMode) {
+			var bulletSpeedX:Int = 150;
+			//the edge of the sprite
+			var bulletX:Float = x + width;
+			//about where the arm is
+			var bulletY:Float = y + 5;
+			//if facing left
+			if (facing == FlxObject.LEFT) {
+				//reverse the speed
+				bulletSpeedX = -bulletSpeedX;
+				//opposite edge of the sprite - bullet width
+				bulletX = x - 2;
+			}
+			//shoot a regular bullet
+			if (!missileMode){
+				PlayState.bullets.add(new Bullet(bulletX, bulletY, bulletSpeedX, 0, 1));
+			}
+			//shoot a missile
+			if (missileMode){
+				PlayState.bullets.add(new Missile(bulletX, bulletY, bulletSpeedX, 0, 5));
+			}
+		}
+		
+		if (shootButtonReleased){
+			charge = 0;
+		}
+	}
+	
 	/** picks an animation to play **/
 	function animationHandler()
 	{
@@ -207,7 +251,13 @@ class Player extends FlxSprite
 		if (!isWalking && !isJumping)
 			animation.play("idle");
 			
-		//turn around when you're going in the opposite direction
-		flipX = velocity.x < 0;
+		//turn around when you're going in the opposite direction, but only if you're actually moving
+		if (velocity.x != 0){
+			if (velocity.x < 0){
+				facing = FlxObject.LEFT;
+			}else{
+				facing = FlxObject.RIGHT;
+			}
+		}
 	}
 }

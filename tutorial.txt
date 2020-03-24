@@ -49,6 +49,9 @@ To do all this they'll need some variables. Health, MaxHealth, Missile Fire Rate
 	/** max health (also the default health when the player respawns) **/
 	var maxHealth:Int = 100;
 	
+	/** missile (!!!) charge **/
+	var charge:Int = 0;
+	
 	/** default is full charge after 1/2 second (30/60 frames) **/
 	var chargeRate:Int = 30;
 	
@@ -100,6 +103,9 @@ class Player extends FlxSprite
 	
 	/** max health (also the default health when the player respawns) **/
 	var maxHealth:Int = 100;
+	
+	/** missile (!!!) charge **/
+	var charge:Int = 0;
 	
 	/** default is full charge after 1/2 second (30/60 frames) **/
 	var chargeRate:Int = 30;
@@ -412,9 +418,13 @@ animation.add("idle", [0]);
 animation.add("walk", [1, 2], 6, true);
 animation.add("jump", [3]);
 
+//our guy is facing right by default, so if he turns left we should flip it
+setFacingFlip(FlxObject.RIGHT, false, false);
+setFacingFlip(FlxObject.LEFT, true, false);
+
 ```
 
-Now we can add a new function at the end of our update right before `super.update(elapsed)` called animationHandler. This decides on what animation to play, which we'll call using `animation.play();` So let's do this:
+Now we can add a new function at the end of our update right before `super.update(elapsed)` called `animationHandler()`. This decides on what animation to play, which we'll call using `animation.play();` So let's do this:
 	
 ```
 
@@ -436,8 +446,14 @@ function animationHandler()
 	if (!isWalking && !isJumping)
 		animation.play("idle");
 		
-	//turn around automatically
-	flipX = velocity.x < 0;
+	//turn around when you're going in the opposite direction, but only if you're actually moving
+	if (velocity.x != 0){
+		if (velocity.x < 0){
+			facing = FlxObject.LEFT;
+		}else{
+			facing = FlxObject.RIGHT;
+		}
+	}
 }
 	
 ```
@@ -568,6 +584,10 @@ Okay, now to address a little something that's been bothering me and probably bo
 			animation.add("idle", [0]);
 			animation.add("walk", [1, 2], 6, true);
 			animation.add("jump", [3]);
+			
+			//our guy is facing right by default, so if he turns left we should flip it
+			setFacingFlip(FlxObject.RIGHT, false, false);
+			setFacingFlip(FlxObject.LEFT, true, false);
 			
 			//set the max speed, Flixel won't let the object get any faster than this!
 			maxVelocity.x = maxSpeed;
@@ -709,12 +729,205 @@ Okay, now to address a little something that's been bothering me and probably bo
 			if (!isWalking && !isJumping)
 				animation.play("idle");
 				
-			//turn around when you're going in the opposite direction
-			flipX = velocity.x < 0;
+			//turn around when you're going in the opposite direction, but only if you're actually moving
+			if (velocity.x != 0){
+				if (velocity.x < 0){
+					facing = FlxObject.LEFT;
+				}else{
+					facing = FlxObject.RIGHT;
+				}
+			}
 		}
 	}
 ```
 
 ///////////////////////////////
 
+
+Alright, what's next? Violence. Guns. Mwahahaha! Yes our astronaut with their arm raised out actually has a little arm blaster. Use your imagination.
+
+First let's create a simple bullet class in a new file called `Bullet.hx`
+
+
+```
+package;
+
+import flixel.FlxSprite;
+
+/**
+ * A simple square that contains data on damage
+ * @author <Your Name Here>
+ */
+class Bullet extends FlxSprite
+{
+	/** how much damage our bullet does **/
+	public var dmg:Int = 1;
+	
+	/** how long our bullet stays active (in frames) **/
+	var lifeSpan:Int = 180;
+	
+	public function new(X:Float = 0, Y:Float = 0, velX:Float = 0, velY:Float = 0, strength:Int = 1)
+	{
+		super(X, Y);
+		//set our damage
+		dmg = strength;
+		
+		//make a simple square
+		makeGraphic(2, 2);
+		
+		//set velocity the easy way
+		velocity.set(velX, velY);
+		
+		//add it to our bullet layer
+		PlayState.bullets.add(this);
+	}
+
+	override public function update(elapsed:Float):Void
+	{
+		lifeSpan--;
+		if (lifeSpan <= 0) kill();
+		super.update(elapsed);
+	}
+	
+	override function kill(){
+		//clean up bullets a bit by removing this bullet from it
+		PlayState.bullets.remove(this, true);
+		super.kill();
+	}
+
+}
+
+```
+
+In order to add bullets, we'll need to understand FlxTypedGroups. These are fancy little groups that you can pass in many functions as opposed to a simple FlxSprite or FlxObject to perform that on multiple objects at once. It also can be treated like a "layer" in your game.
+
+Add a new FlxTypedGroup<Bullet> constructor in `PlayState` so your declarations look like this:
+
+```
+var player:Player;
+var testPlatform:FlxSprite;
+public static var bullets:FlxTypedGroup<Bullet>;
+```
+
+Then initialize at the end of `create` so it looks like this:
+	
+```
+//make a group of bullets
+add(bullets = new FlxTypedGroup<Bullet>());
+```
+
+Awesome. Now let's add `shoot()` code. Uncomment `shoot()` in Player's `update()` function and add this block, which will make a bullet that is dependent on the player's facing direction. Remember the player is by default facing Right!
+
+```
+
+/** Shoots a bullet **/
+function shoot()
+{
+	if (shootButtonPressed){
+		var bulletSpeedX:Int = 150;
+		//the edge of the sprite
+		var bulletX:Float = x + width;
+		//about where the arm is
+		var bulletY:Float = y + 5;
+		//if facing left
+		if (flipX) {
+			//reverse the speed
+			bulletSpeedX = -bulletSpeedX;
+			//opposite edge of the sprite - bullet width
+			bulletX = x - 2;
+		}
+		PlayState.bullets.add(new Bullet(bulletX, bulletY, bulletSpeedX, 0, 1));
+	}
+}
+
+```
+
+Groovy. Now let's add missiles for a bit extra oomph. When our player charges their gun and releases, they fire of a spicy missile. First let's create the Missile class that inherits from Bullet
+
+```
+package;
+
+import flixel.FlxSprite;
+import flixel.FlxObject;
+
+/**
+ * A spicy missile
+ * @author <Your Name Here>
+ */
+class Missile extends Bullet 
+{
+	var maxMissileVelocity:Int = 200;
+	
+	public function new(X:Float=0, Y:Float=0, velX:Float=0, velY:Float=0, team:Int=0) 
+	{
+		super(X, Y - 1, velX, velY, team);
+		
+		loadGraphic(AssetPaths.missile__png);
+		
+		setFacingFlip(FlxObject.RIGHT, false, false);
+		setFacingFlip(FlxObject.LEFT, true, false);
+		
+		maxVelocity.x = maxMissileVelocity;
+		
+		if (velocity.x > 0){
+			facing = FlxObject.LEFT;
+			x -= 3; //difference in size between a missile and a bullet is 3
+		}
+		
+		//missile starts slow
+		velocity.x = velocity.x / 10;
+	}
+	
+	override public function update(elapsed:Float):Void 
+	{
+		//then gets rapidly faster
+		velocity.x = velocity.x * 1.2;
+		super.update(elapsed);
+	}
+	
+}
+```
+
+This missile starts slower than a bullet but really picks up speed! Now we can add it to the `shoot()` function.
+
+```
+/** Shoots a bullet or missile **/
+function shoot()
+{
+	if (shootButtonHeld) charge++;
+	
+	//switch to misisles if charge is complete
+	var missileMode:Bool = charge >= chargeRate;
+	
+	//our two conditions handle inputs for regular bullets or missiles
+	if (shootButtonPressed || shootButtonReleased && missileMode) {
+		var bulletSpeedX:Int = 150;
+		//the edge of the sprite
+		var bulletX:Float = x + width;
+		//about where the arm is
+		var bulletY:Float = y + 5;
+		//if facing left
+		if (facing == FlxObject.LEFT) {
+			//reverse the speed
+			bulletSpeedX = -bulletSpeedX;
+			//opposite edge of the sprite - bullet width
+			bulletX = x - 2;
+		}
+		//shoot a regular bullet
+		if (!missileMode){
+			PlayState.bullets.add(new Bullet(bulletX, bulletY, bulletSpeedX, 0, 1));
+		}
+		//shoot a missile
+		if (missileMode){
+			PlayState.bullets.add(new Missile(bulletX, bulletY, bulletSpeedX, 0, 5));
+		}
+	}
+	
+	if (shootButtonReleased){
+		charge = 0;
+	}
+}
+```
+
+Yes this means you can't actually avoid shooting a bullet before you shoot a missile. There's a couple control ways around that but it's not enough of a problem to warrant time in this tutorial. Instead let's look at giving our little Astronaut something to actually shoot at. We'll have a tiny crawler enemy, they're not very bright, they just walk left to right and if they hit a wall they turn around. Oh well. Anyways, let's make Crawler.
 

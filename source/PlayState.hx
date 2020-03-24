@@ -3,11 +3,13 @@ package;
 import flixel.FlxSprite;
 import flixel.FlxState;
 import flixel.FlxG;
+import flixel.group.FlxGroup.FlxTypedGroup;
 
 class PlayState extends FlxState
 {
 	var player:Player;
 	var testPlatform:FlxSprite;
+	public static var bullets:FlxTypedGroup<Bullet>;
 	
 	override public function create():Void
 	{
@@ -20,6 +22,9 @@ class PlayState extends FlxState
 		add(testPlatform = new FlxSprite(0, player.y + player.height));
 		testPlatform.makeGraphic(FlxG.width, 100);
 		testPlatform.immovable = true;
+		
+		//make a group of bullets
+		add(bullets = new FlxTypedGroup<Bullet>());
 	}
 
 	override public function update(elapsed:Float):Void
