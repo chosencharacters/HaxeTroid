@@ -12,22 +12,24 @@ class Bullet extends FlxSprite
 	public var damage(default, null):Int = 1;
 	
 	/** how long our bullet stays active (in frames) **/
-	var lifeSpan:Int = 180;
+	var lifeSpan:Int;
 
 	public function new()
 	{
 		super();
+
+		//make a simple square
+		makeGraphic(2, 2);
 	}
 	
 	public function init(x:Float, y:Float, velX:Float, velY:Float, damage:Int)
 	{
+		lifeSpan = 180;
+
 		setPosition(x, y);
 
 		//set our damage
 		this.damage = damage;
-
-		//make a simple square
-		makeGraphic(2, 2);
 
 		//set velocity the easy way
 		velocity.set(velX, velY);
