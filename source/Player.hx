@@ -223,11 +223,11 @@ class Player extends FlxSprite
 			
 			if (missileMode) {
 				//shoot a missile
-				var missile = bullets.recycle(Missile.new);
+				var missile = bullets.recycle(Missile, Missile.new);
 				missile.init(bulletX, bulletY, bulletSpeedX, 0, 5);
 			} else {
 				//shoot a regular bullet
-				var bullet = bullets.recycle(Bullet.new);
+				var bullet = bullets.recycle(Bullet, Bullet.new);
 				bullet.init(bulletX, bulletY, bulletSpeedX, 0, 1);
 			}
 		}
