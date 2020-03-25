@@ -9,25 +9,30 @@ import flixel.FlxSprite;
 class Bullet extends FlxSprite
 {
 	/** how much damage our bullet does **/
-	public var dmg:Int = 1;
+	public var damage(default, null):Int = 1;
 	
 	/** how long our bullet stays active (in frames) **/
-	var lifeSpan:Int = 180;
-	
-	public function new(X:Float = 0, Y:Float = 0, velX:Float = 0, velY:Float = 0, strength:Int = 1)
+	var lifeSpan:Int;
+
+	public function new()
 	{
-		super(X, Y);
-		//set our damage
-		dmg = strength;
-		
+		super();
+
 		//make a simple square
 		makeGraphic(2, 2);
-		
+	}
+	
+	public function init(x:Float, y:Float, velX:Float, velY:Float, damage:Int)
+	{
+		lifeSpan = 180;
+
+		setPosition(x, y);
+
+		//set our damage
+		this.damage = damage;
+
 		//set velocity the easy way
 		velocity.set(velX, velY);
-		
-		//add it to our bullet layer
-		PlayState.bullets.add(this);
 	}
 
 	override public function update(elapsed:Float):Void
@@ -36,11 +41,4 @@ class Bullet extends FlxSprite
 		if (lifeSpan <= 0) kill();
 		super.update(elapsed);
 	}
-	
-	override function kill(){
-		//clean up bullets a bit by removing this bullet from it
-		PlayState.bullets.remove(this, true);
-		super.kill();
-	}
-
 }

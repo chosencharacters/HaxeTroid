@@ -1,6 +1,5 @@
 package;
 
-import flixel.FlxSprite;
 import flixel.FlxObject;
 
 /**
@@ -9,18 +8,18 @@ import flixel.FlxObject;
  */
 class Missile extends Bullet 
 {
-	var maxMissileVelocity:Int = 200;
+	static inline var MAX_MISSILE_VELOCITY:Int = 200;
 	
-	public function new(X:Float=0, Y:Float=0, velX:Float=0, velY:Float=0, team:Int=0) 
+	public function new() 
 	{
-		super(X, Y - 1, velX, velY, team);
+		super();
 		
 		loadGraphic(AssetPaths.missile__png);
 		
 		setFacingFlip(FlxObject.RIGHT, false, false);
 		setFacingFlip(FlxObject.LEFT, true, false);
 		
-		maxVelocity.x = maxMissileVelocity;
+		maxVelocity.x = MAX_MISSILE_VELOCITY;
 		
 		if (velocity.x > 0){
 			facing = FlxObject.LEFT;
@@ -28,13 +27,13 @@ class Missile extends Bullet
 		}
 		
 		//missile starts slow
-		velocity.x = velocity.x / 10;
+		velocity.x /= 10;
 	}
 	
 	override public function update(elapsed:Float):Void 
 	{
 		//then gets rapidly faster
-		velocity.x = velocity.x * 1.2;
+		velocity.x *= 1.2;
 		super.update(elapsed);
 	}
 	

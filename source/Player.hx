@@ -1,12 +1,11 @@
 package;
 
+import flixel.group.FlxGroup.FlxTypedGroup;
 import flixel.FlxG;
 import flixel.FlxSprite;
 import flixel.FlxObject;
-import flixel.system.FlxAssets.FlxGraphicAsset;
 import flixel.input.gamepad.FlxGamepad;
 import flixel.input.gamepad.FlxGamepadInputID;
-
 
 /**
  * A player that walks, jumps, jetpacks, and shoots!
@@ -15,37 +14,39 @@ import flixel.input.gamepad.FlxGamepadInputID;
 class Player extends FlxSprite 
 {
 	/** max speed they on the X axis (horizontal) **/
-	var maxSpeed:Int = 100;
+	static inline var MAX_SPEED:Int = 100;
 	
 	/** frames to reach max speed (60 frames per second) **/
-	var framesToMaxSpeed:Int = 15;
+	static inline var FRAMES_TO_MAX_SPEED:Int = 15;
 	
 	/** max health (also the default health when the player respawns) **/
-	var maxHealth:Int = 100;
-	
-	/** missile (!!!) charge **/
-	var charge:Int = 0;
+	static inline var MAX_HEALTH:Int = 100;
 	
 	/** default is full charge after 1/2 second (30/60 frames) **/
-	var chargeRate:Int = 30;
+	static inline var CHARGE_RATE:Int = 30;
 	
 	/** our intial jump, negative is up **/
-	var initialJump:Int = -100;
+	static inline var INITIAL_JUMP:Int = -100;
 	
 	/** jetpack lift acceleration **/
-	var lift:Int = 15;
+	static inline var LIFT:Int = 15;
 	
-	/** max jetpack lift **/
-	var liftMax:Int = 60;
+	/** max jetpack LIFT **/
+	static inline var LIFT_MAX:Int = 60;
 	
 	/** max fuel, lose 1 per frame **/
-	var fuelMax:Int = 40;
+	static inline var FUEL_MAX:Int = 40;
 	
 	/** frames until fuel is recharged **/
-	var fuelRechargeRate:Int = 20;
+	static inline var FUEL_RECHARGE_RATE:Int = 20;
 	
+	var bullets:FlxTypedGroup<Bullet>;
+
 	/** player's current fuel **/
 	var fuel:Int = 0;
+
+	/** missile (!!!) charge **/
+	var charge:Int = 0;
 	
 	/** Are we in jetpack mode? **/
 	var jetpackMode:Bool = false;
@@ -60,9 +61,10 @@ class Player extends FlxSprite
 	var shootButtonHeld:Bool = false;
 	var shootButtonReleased:Bool = false;
 	
-	public function new(?X:Float=0, ?Y:Float=0, ?SimpleGraphic:FlxGraphicAsset) 
+	public function new(x:Float, y:Float, bullets:FlxTypedGroup<Bullet>) 
 	{
-		super(X, Y, SimpleGraphic);
+		super(x, y);
+		this.bullets = bullets;
 		
 		//adding animations
 		loadGraphic(AssetPaths.astro__png, true, 8, 9, true);
@@ -75,7 +77,7 @@ class Player extends FlxSprite
 		setFacingFlip(FlxObject.LEFT, true, false);
 		
 		//set the max speed, Flixel won't let the object get any faster than this!
-		maxVelocity.x = maxSpeed;
+		maxVelocity.x = MAX_SPEED;
 		
 		//gravity, down is positive, up is negative
 		acceleration.y = 200;
@@ -96,7 +98,7 @@ class Player extends FlxSprite
 		Take Damage functions
 		*/
 		
-		animationHandler();
+		handleAnimation();
 		
 		super.update(elapsed);
 	}
@@ -104,14 +106,14 @@ class Player extends FlxSprite
 	/** Updates controls **/
 	function updateControl(){
 		//1. Keyboard Controls
-		rightButton = FlxG.keys.anyPressed(["RIGHT"]);
-		leftButton = FlxG.keys.anyPressed(["LEFT"]);
-		jumpButtonPressed = FlxG.keys.anyJustPressed(["UP", "Z"]);
-		jumpButtonHeld = FlxG.keys.anyPressed(["UP", "Z"]);
-		jumpButtonReleased = FlxG.keys.anyJustReleased(["UP", "Z"]);
-		shootButtonPressed = FlxG.keys.anyJustPressed(["X", "SPACE"]);
-		shootButtonHeld = FlxG.keys.anyPressed(["X", "SPACE"]);
-		shootButtonReleased = FlxG.keys.anyJustReleased(["X", "SPACE"]);
+		rightButton = FlxG.keys.anyPressed([RIGHT]);
+		leftButton = FlxG.keys.anyPressed([LEFT]);
+		jumpButtonPressed = FlxG.keys.anyJustPressed([UP, Z]);
+		jumpButtonHeld = FlxG.keys.anyPressed([UP, Z]);
+		jumpButtonReleased = FlxG.keys.anyJustReleased([UP, Z]);
+		shootButtonPressed = FlxG.keys.anyJustPressed([X, SPACE]);
+		shootButtonHeld = FlxG.keys.anyPressed([X, SPACE]);
+		shootButtonReleased = FlxG.keys.anyJustReleased([X, SPACE]);
 		
 		//2. Joystick Controls
 		
@@ -138,14 +140,14 @@ class Player extends FlxSprite
 		if (leftButton) 
 		{
 			//move to the LEFT (negative)
-			velocity.x -= maxSpeed / framesToMaxSpeed;
+			velocity.x -= MAX_SPEED / FRAMES_TO_MAX_SPEED;
 			//if we're going to the RIGHT, slow down the player's speed (so they turn around faster)
 			if (velocity.x > 0) velocity.x * .95;
 		}
 		if (rightButton) 
 		{
 			//move to the RIGHT (positive)
-			velocity.x += maxSpeed / framesToMaxSpeed;
+			velocity.x += MAX_SPEED / FRAMES_TO_MAX_SPEED;
 			//if we're going to the LEFT, slow down the player's speed (so they turn around faster)
 			if (velocity.x < 0) velocity.x * .95;
 		}
@@ -161,7 +163,7 @@ class Player extends FlxSprite
 		{
 			//We can jump if the UP key is pressed!
 			if (jumpButtonPressed){
-				velocity.y = initialJump;
+				velocity.y = INITIAL_JUMP;
 			}
 		}
 		
@@ -169,12 +171,12 @@ class Player extends FlxSprite
 		//J1. If we hold UP and we have fuel
 		if (jumpButtonHeld && fuel > 0 && jetpackMode) 
 		{
-			//J2. Add lift and decrease fuel
-			velocity.y -= lift;
+			//J2. Add LIFT and decrease fuel
+			velocity.y -= LIFT;
 			fuel--;
 			//Max velocity so they don't go flying infinitely faster
-			if (velocity.y < -liftMax) {
-				velocity.y = -liftMax;
+			if (velocity.y < -LIFT_MAX) {
+				velocity.y = -LIFT_MAX;
 			}
 		}
 		//J3. When they're on the floor, add fuel back.
@@ -182,10 +184,10 @@ class Player extends FlxSprite
 		{
 			//If we're on the floor, we reset jetpackMode
 			jetpackMode = false;
-			//They'll recharge in fuelRechargeRate frames
-			fuel += Math.ceil(fuelMax / fuelRechargeRate);
-			if (fuel > fuelMax) {
-				fuel = fuelMax;
+			//They'll recharge in FUEL_RECHARGE_RATE frames
+			fuel += Math.ceil(FUEL_MAX / FUEL_RECHARGE_RATE);
+			if (fuel > FUEL_MAX) {
+				fuel = FUEL_MAX;
 			}
 		}
 		
@@ -202,7 +204,7 @@ class Player extends FlxSprite
 		if (shootButtonHeld) charge++;
 		
 		//switch to misisles if charge is complete
-		var missileMode:Bool = charge >= chargeRate;
+		var missileMode:Bool = charge >= CHARGE_RATE;
 		
 		//our two conditions handle inputs for regular bullets or missiles
 		if (shootButtonPressed || shootButtonReleased && missileMode) {
@@ -218,13 +220,15 @@ class Player extends FlxSprite
 				//opposite edge of the sprite - bullet width
 				bulletX = x - 2;
 			}
-			//shoot a regular bullet
-			if (!missileMode){
-				PlayState.bullets.add(new Bullet(bulletX, bulletY, bulletSpeedX, 0, 1));
-			}
-			//shoot a missile
-			if (missileMode){
-				PlayState.bullets.add(new Missile(bulletX, bulletY, bulletSpeedX, 0, 5));
+			
+			if (missileMode) {
+				//shoot a missile
+				var missile = bullets.recycle(Missile, Missile.new);
+				missile.init(bulletX, bulletY, bulletSpeedX, 0, 5);
+			} else {
+				//shoot a regular bullet
+				var bullet = bullets.recycle(Bullet, Bullet.new);
+				bullet.init(bulletX, bulletY, bulletSpeedX, 0, 1);
 			}
 		}
 		
@@ -234,7 +238,7 @@ class Player extends FlxSprite
 	}
 	
 	/** picks an animation to play **/
-	function animationHandler()
+	function handleAnimation()
 	{
 		var isWalking:Bool = velocity.x != 0;
 		var isJumping:Bool = !isTouching(FlxObject.FLOOR);
